@@ -20,26 +20,37 @@ git push -u origin main
 
 Убедитесь, что в репозитории есть **`package.json`**, **`prisma/schema.prisma`**, нет закоммиченных **`.env`** / **`.env.local`** (секреты только в Vercel).
 
-## 2. Облачная PostgreSQL
+## 2. База: Neon через Vercel (рекомендуется)
 
-Нужна отдельная БД для **продакшена** (не `localhost`).
+1. В Vercel откройте проект → **Storage** → **Create Database** → **Neon** (или вкладка Marketplace).
+2. Создайте базу, затем **Connect** / **Connect Project** — привяжите к Next.js-проекту.
+3. В интерфейсе Neon (как на Quickstart) откройте сниппет **`.env.local`**: там будут как минимум:
+   - **`DATABASE_URL`** — обычно **pooled** (через PgBouncer), для запросов приложения;
+   - **`DATABASE_URL_UNPOOLED`** — **прямое** подключение к Postgres.
 
-Подойдут, например:
+В проекте Prisma настроен так: **`url`** = pooled, **`directUrl`** = unpooled (так советуют для Neon + Prisma).
 
-- [Neon](https://neon.tech) (бесплатный tier)
-- [Vercel Postgres](https://vercel.com/storage/postgres)
-- Railway, Render и т.д.
+4. В **Vercel → Project → Settings → Environment Variables** добавьте **обе** переменные для **Production** (значения из Neon, **Show secret** → **Copy**). Имена должны совпадать: `DATABASE_URL` и `DATABASE_URL_UNPOOLED`.
 
-Создайте базу, скопируйте **`DATABASE_URL`** (для Node обычно нужен **`?sslmode=require`** в конце URI).
-
-Один раз примените схему **с вашего ПК** (подставьте прод-строку подключения):
+5. Один раз примените схему к облачной БД **с вашего ПК**:
 
 ```powershell
-$env:DATABASE_URL="postgresql://...ваш_прод_урл..."
+$env:DATABASE_URL="вставьте_pooled_из_Neon"
+$env:DATABASE_URL_UNPOOLED="вставьте_unpooled_из_Neon"
 npx prisma db push
 ```
 
-Или временно положите прод-`DATABASE_URL` в отдельный файл и: `dotenv -e .env.production.local -- npx prisma db push` (если настроите файл).
+Либо сохраните обе строки в файл **`.env.production.local`** (не коммитьте) и выполните:
+
+```powershell
+npx dotenv-cli -e .env.production.local -- npx prisma db push
+```
+
+(`dotenv-cli` подтянется через `npx`; при желании установите `npm i -D dotenv-cli`.)
+
+### Локальная разработка (PostgreSQL на ПК)
+
+В **`.env`** и **`.env.local`** задайте **`DATABASE_URL`** и **`DATABASE_URL_UNPOOLED`** одинаковыми (один и тот же URI к `localhost`) — см. **`.env.example`**.
 
 ## 3. Проект на Vercel
 
@@ -55,7 +66,7 @@ npx prisma db push
 | Переменная | Описание |
 |------------|----------|
 | `DATABASE_URL` | URI прод-Postgres (`sslmode=require`). |
-| `AUTH_SECRET` | Случайная строка, та же идея, что локально: PowerShell см. ниже или `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. |
+| `AUTH_SECRET` | Случайная строка (PowerShell / Node см. ниже). **Обязательно для работы входа на проде.** На этапе `next build` без переменной сборка всё равно может пройти (в коде есть заглушка только для фазы build), но без `AUTH_SECRET` на **runtime** сессии не будут работать. |
 | `AUTH_URL` | **Точный** URL сайта: `https://ИМЯ-ПРОЕКТА.vercel.app` (без слэша в конце). После кастомного домена — замените на `https://ваш-домен.ru`. |
 | `LIVEBLOCKS_SECRET_KEY` | Секретный ключ Liveblocks (для прод лучше отдельный проект/ключ в [dashboard](https://liveblocks.io/dashboard)). |
 | `GEMINI_API_KEY` | Ключ Google AI (если нужен агент на холсте). |

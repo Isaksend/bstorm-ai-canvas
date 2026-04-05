@@ -7,14 +7,29 @@ import { prisma } from "@/lib/prisma";
 function resolveAuthSecret(): string {
   const v = process.env.AUTH_SECRET?.trim();
   if (v && v.length >= 16) return v;
+
   if (process.env.NODE_ENV !== "production") {
     console.warn(
       "[auth] AUTH_SECRET не задан в .env — для npm run dev используется временный ключ. Добавьте в .env / .env.local строку из: openssl rand -base64 32"
     );
     return "dev-only-auth-secret-min-32-chars-do-not-use-in-prod!!";
   }
+
+  // Во время `next build` Next подгружает роуты с NODE_ENV=production, но без .env на CI —
+  // иначе падает сборка при collect page data (например /api/liveblocks-auth импортирует auth).
+  const isProductionBuild =
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.NEXT_PHASE === "phase-production-compile";
+
+  if (isProductionBuild) {
+    console.warn(
+      "[auth] На этапе production build нет AUTH_SECRET — заглушка только для сборки. В Vercel задайте AUTH_SECRET в Environment Variables (и для Production build тоже)."
+    );
+    return "build-only-placeholder-auth-secret-min-32-chars-x!";
+  }
+
   throw new Error(
-    "Задайте AUTH_SECRET в окружении (openssl rand -base64 32). Нужен для production и для next build."
+    "Задайте AUTH_SECRET (openssl rand -base64 32). В production runtime секрет обязателен; на Vercel добавьте переменную для Production."
   );
 }
 
