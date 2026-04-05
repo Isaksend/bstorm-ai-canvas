@@ -72,6 +72,9 @@ npx dotenv-cli -e .env.production.local -- npx prisma db push
 | `GEMINI_API_KEY` | Ключ Google AI (если нужен агент на холсте). |
 | `GEMINI_MODEL` | Необязательно, например `gemini-2.0-flash`. |
 | `NEXT_PUBLIC_AGENT_INTERVAL_MS` | Необязательно, например `60000`. |
+| `LIVEKIT_API_KEY` | Ключ API [LiveKit Cloud](https://cloud.livekit.io/) (только сервер). |
+| `LIVEKIT_API_SECRET` | Секрет того же проекта (только сервер). |
+| `NEXT_PUBLIC_LIVEKIT_URL` | WebSocket URL, например `wss://xxxx.livekit.cloud` (из настроек проекта). |
 
 **Не задавайте** `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` одновременно с секретным режимом для этого приложения — у вас в коде при наличии публичного ключа идёт другой путь авторизации Liveblocks. Для прод с именами пользователей из аккаунта используйте **`LIVEBLOCKS_SECRET_KEY`** без публичного ключа на клиенте.
 

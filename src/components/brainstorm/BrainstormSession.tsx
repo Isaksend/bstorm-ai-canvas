@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Editor } from "tldraw";
 import { LiveTranscript } from "@/components/audio/LiveTranscript";
+import { LiveKitAudioDock } from "@/components/voice/LiveKitAudioDock";
 import { Canvas } from "@/components/canvas/Canvas";
 import { useBrainstormActionsOptional } from "@/components/brainstorm/brainstorm-actions-context";
 import { AiStatusIndicator, type BrainstormAgentPhase } from "./AiStatusIndicator";
@@ -45,6 +46,8 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
   const rateLimitedSnapshotRef = useRef<string | null>(null);
   const [transcript, setTranscript] = useState("");
   const [micOn, setMicOn] = useState(false);
+  /** Голосовая комната LiveKit — не совмещать с Web Speech (один микрофон). */
+  const [voiceCallActive, setVoiceCallActive] = useState(false);
   const [agentOn, setAgentOn] = useState(false);
   const [phase, setPhase] = useState<BrainstormAgentPhase>("idle");
   const [agentLog, setAgentLog] = useState<string>("");
@@ -72,6 +75,10 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
       return micOn ? "listening" : "idle";
     });
   }, [micOn]);
+
+  useEffect(() => {
+    if (voiceCallActive) setMicOn(false);
+  }, [voiceCallActive]);
 
   useEffect(() => {
     if (!agentOn) return;
@@ -224,12 +231,21 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
                 role="switch"
                 aria-checked={micOn}
                 aria-label={micOn ? "Живой звук включён" : "Включить живой звук"}
-                title={micOn ? "Выключить микрофон" : "Включить микрофон"}
+                title={
+                  voiceCallActive
+                    ? "Во время звонка LiveKit микрофон занят — выйдите из звонка"
+                    : micOn
+                      ? "Выключить микрофон"
+                      : "Включить микрофон"
+                }
                 onClick={() => setMicOn((v) => !v)}
+                disabled={voiceCallActive}
                 className={`flex size-14 items-center justify-center rounded-full border-2 shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 ${
-                  micOn
-                    ? "border-violet-400 bg-violet-600 text-white ring-2 ring-violet-500/35"
-                    : "border-neutral-500 bg-neutral-800 text-neutral-300 hover:border-neutral-400"
+                  voiceCallActive
+                    ? "cursor-not-allowed border-neutral-600 bg-neutral-800 text-neutral-500 opacity-70"
+                    : micOn
+                      ? "border-violet-400 bg-violet-600 text-white ring-2 ring-violet-500/35"
+                      : "border-neutral-500 bg-neutral-800 text-neutral-300 hover:border-neutral-400"
                 }`}
               >
                   <svg
@@ -271,6 +287,8 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
                   {agentOn ? `~${Math.round(AGENT_BASE_INTERVAL_MS / 1000)} с` : "выкл."}
                 </span>
               </div>
+
+              <LiveKitAudioDock roomId={roomId} onVoiceActiveChange={setVoiceCallActive} />
             </div>
 
             <div className="flex w-full max-w-full gap-2 sm:max-w-xl">
@@ -294,8 +312,8 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
       </div>
 
       <LiveTranscript
-        key={micOn ? "on" : "off"}
-        active={micOn}
+        key={micOn && !voiceCallActive ? "on" : "off"}
+        active={micOn && !voiceCallActive}
         onFinalText={appendTranscript}
         onWakeClear={clearTranscript}
       />
