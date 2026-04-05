@@ -5,6 +5,7 @@ import type { Editor } from "tldraw";
 import { Tldraw } from "tldraw";
 import "tldraw/tldraw.css";
 import { useStorageStore } from "@/lib/liveblocks/useStorageStore";
+import { CanvasErrorBoundary } from "@/components/canvas/CanvasErrorBoundary";
 
 type CanvasProps = {
   /** Второй клиент (ИИ) двигает указатель, чтобы на основном холсте был виден его курсор. */
@@ -77,42 +78,50 @@ export function Canvas({ simulateAiCursor = false, onEditorReady }: CanvasProps)
   }
 
   return (
-    <div className="h-full w-full">
-      <Tldraw
-        store={storeState.store}
-        autoFocus
-        onMount={(editor) => {
-          onEditorReady?.(editor);
-          if (!simulateAiCursor) return;
-          const container = editor.getContainer();
-          const start = performance.now();
-          let raf = 0;
+    <div className="relative z-0 h-full w-full min-h-0">
+      <CanvasErrorBoundary>
+        <Tldraw
+          store={storeState.store}
+          autoFocus
+          onMount={(editor) => {
+            onEditorReady?.(editor);
+            if (!simulateAiCursor) return;
+            const container = editor.getContainer();
+            const start = performance.now();
+            let raf = 0;
+            /** Не чаще ~4 Гц: иначе каждый кадр гонит presence в Liveblocks и валит основной холст. */
+            const minMs = 250;
+            let lastEmit = 0;
 
-          function tick() {
-            const t = (performance.now() - start) / 1000;
-            const rect = container.getBoundingClientRect();
-            const rx = Math.min(rect.width * 0.28, 220);
-            const ry = Math.min(rect.height * 0.22, 160);
-            const cx = rect.width * 0.5 + Math.cos(t * 0.65) * rx;
-            const cy = rect.height * 0.42 + Math.sin(t * 0.5) * ry;
-            container.dispatchEvent(
-              new PointerEvent("pointermove", {
-                bubbles: true,
-                cancelable: true,
-                clientX: rect.left + cx,
-                clientY: rect.top + cy,
-                pointerId: 1,
-                pointerType: "mouse",
-                isPrimary: true,
-              })
-            );
+            function tick(now: number) {
+              const t = (now - start) / 1000;
+              const rect = container.getBoundingClientRect();
+              const rx = Math.min(rect.width * 0.28, 220);
+              const ry = Math.min(rect.height * 0.22, 160);
+              const cx = rect.width * 0.5 + Math.cos(t * 0.65) * rx;
+              const cy = rect.height * 0.42 + Math.sin(t * 0.5) * ry;
+              if (now - lastEmit >= minMs) {
+                lastEmit = now;
+                container.dispatchEvent(
+                  new PointerEvent("pointermove", {
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: rect.left + cx,
+                    clientY: rect.top + cy,
+                    pointerId: 1,
+                    pointerType: "mouse",
+                    isPrimary: true,
+                  })
+                );
+              }
+              raf = requestAnimationFrame(tick);
+            }
+
             raf = requestAnimationFrame(tick);
-          }
-
-          raf = requestAnimationFrame(tick);
-          return () => cancelAnimationFrame(raf);
-        }}
-      />
+            return () => cancelAnimationFrame(raf);
+          }}
+        />
+      </CanvasErrorBoundary>
     </div>
   );
 }

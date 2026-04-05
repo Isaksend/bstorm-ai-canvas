@@ -201,7 +201,7 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
         }}
       />
 
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 z-10">
         {/* Ниже верхней панели tldraw (меню страницы, undo, skip-link «к содержанию») */}
         <div className="pointer-events-auto absolute left-3 top-[5.25rem] z-[200] flex max-w-[min(20rem,calc(100%-1.5rem))] flex-col gap-2 sm:left-4 sm:top-[5.5rem]">
           <AiStatusIndicator phase={phase} hint={agentLog || undefined} />
