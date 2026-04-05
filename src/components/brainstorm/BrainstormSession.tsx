@@ -201,38 +201,37 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
         }}
       />
 
-      <div className="pointer-events-none absolute inset-0 z-10">
-        {/* Ниже верхней панели tldraw (меню страницы, undo, skip-link «к содержанию») */}
-        <div className="pointer-events-auto absolute left-3 top-[5.25rem] z-[200] flex max-w-[min(20rem,calc(100%-1.5rem))] flex-col gap-2 sm:left-4 sm:top-[5.5rem]">
-          <AiStatusIndicator phase={phase} hint={agentLog || undefined} />
-          {logUi ? (
-            <p
-              className="max-h-28 overflow-y-auto rounded-md border border-neutral-200/90 bg-white/95 px-2 py-1.5 font-mono text-[10px] leading-snug text-neutral-600 shadow-md dark:border-neutral-600 dark:bg-neutral-900/95 dark:text-neutral-300"
-              title={logUi.fullTitle}
-            >
-              {logUi.short}
-            </p>
-          ) : null}
-        </div>
+      {/* Без полноэкранной обёртки: только компактные блоки с pointer-events — иначе padding «снизу» перекрывает панель tldraw. */}
+      <div className="pointer-events-auto absolute left-3 top-[5.25rem] z-[200] flex max-w-[min(20rem,calc(100%-1.5rem))] flex-col gap-2 sm:left-4 sm:top-[5.5rem]">
+        <AiStatusIndicator phase={phase} hint={agentLog || undefined} />
+        {logUi ? (
+          <p
+            className="max-h-28 overflow-y-auto rounded-md border border-neutral-200/90 bg-white/95 px-2 py-1.5 font-mono text-[10px] leading-snug text-neutral-600 shadow-md dark:border-neutral-600 dark:bg-neutral-900/95 dark:text-neutral-300"
+            title={logUi.fullTitle}
+          >
+            {logUi.short}
+          </p>
+        ) : null}
+      </div>
 
-        {/* Низ: выше панели инструментов; pl — в сторону от зума слева; на узком экране — по центру */}
-        <div className="pointer-events-auto absolute inset-x-0 bottom-0 flex flex-col items-center gap-4 px-3 pb-52 pt-2 sm:items-start sm:gap-5 sm:px-4 sm:pb-56 sm:pl-36 md:pl-10">
-          <div className="flex w-full max-w-xl flex-col gap-4 sm:max-w-[min(40rem,calc(100%-2rem))]">
-            <div className="flex flex-wrap items-end justify-center gap-4 sm:justify-start sm:gap-5">
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={micOn}
-                  aria-label={micOn ? "Живой звук включён" : "Включить живой звук"}
-                  title={micOn ? "Выключить микрофон" : "Включить микрофон"}
-                  onClick={() => setMicOn((v) => !v)}
-                  className={`pointer-events-auto flex size-14 items-center justify-center rounded-full border-2 shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 ${
-                    micOn
-                      ? "border-violet-400 bg-violet-600 text-white ring-2 ring-violet-500/35"
-                      : "border-neutral-500 bg-neutral-800 text-neutral-300 hover:border-neutral-400"
-                  }`}
-                >
+      {/* bottom-52: весь блок поднят над панелью инструментов tldraw; не использовать pb-52 здесь — иначе невидимая зона перехватывает клики. */}
+      <div className="pointer-events-auto absolute inset-x-0 bottom-52 z-[200] flex flex-col items-center gap-4 px-3 pt-0 sm:bottom-56 sm:items-start sm:gap-5 sm:px-4 sm:pl-36 md:pl-10">
+        <div className="flex w-full max-w-xl flex-col gap-4 sm:max-w-[min(40rem,calc(100%-2rem))]">
+          <div className="flex flex-wrap items-end justify-center gap-4 sm:justify-start sm:gap-5">
+            <div className="flex flex-col items-center gap-1">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={micOn}
+                aria-label={micOn ? "Живой звук включён" : "Включить живой звук"}
+                title={micOn ? "Выключить микрофон" : "Включить микрофон"}
+                onClick={() => setMicOn((v) => !v)}
+                className={`flex size-14 items-center justify-center rounded-full border-2 shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 ${
+                  micOn
+                    ? "border-violet-400 bg-violet-600 text-white ring-2 ring-violet-500/35"
+                    : "border-neutral-500 bg-neutral-800 text-neutral-300 hover:border-neutral-400"
+                }`}
+              >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -260,7 +259,7 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
                       : "Нажмите, чтобы включить ИИ"
                   }
                   onClick={() => setAgentOn((v) => !v)}
-                  className={`pointer-events-auto flex size-14 items-center justify-center rounded-full border-2 text-xs font-bold leading-tight shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 ${
+                  className={`flex size-14 items-center justify-center rounded-full border-2 text-xs font-bold leading-tight shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 ${
                     agentOn
                       ? "border-violet-400 bg-violet-600 text-white ring-2 ring-violet-500/40"
                       : "border-neutral-500 bg-neutral-800 text-neutral-200 hover:border-neutral-400"
@@ -286,13 +285,12 @@ export function BrainstormSession({ roomId, simulateAiCursor = false }: Props) {
                 onClick={clearTranscript}
                 disabled={!transcript}
                 title="Очистить текст (можно сказать вслух «Серик»)"
-                className="pointer-events-auto self-stretch rounded-lg border border-neutral-300 bg-white px-3 py-2 text-[11px] font-medium text-neutral-700 shadow-md hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                className="self-stretch rounded-lg border border-neutral-300 bg-white px-3 py-2 text-[11px] font-medium text-neutral-700 shadow-md hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
               >
                 Очистить
               </button>
             </div>
           </div>
-        </div>
       </div>
 
       <LiveTranscript

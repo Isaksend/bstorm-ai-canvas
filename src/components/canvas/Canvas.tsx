@@ -78,7 +78,7 @@ export function Canvas({ simulateAiCursor = false, onEditorReady }: CanvasProps)
   }
 
   return (
-    <div className="relative z-0 h-full w-full min-h-0">
+    <div className="relative h-full w-full min-h-0">
       <CanvasErrorBoundary>
         <Tldraw
           store={storeState.store}

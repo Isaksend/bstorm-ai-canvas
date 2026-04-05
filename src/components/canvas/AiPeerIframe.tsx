@@ -3,15 +3,12 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Скрытый /peer с «движущимся курсором» шлёт десятки апдейтов presence/сек в ту же комнату Liveblocks.
- * На проде это часто ломает tldraw (чёрный экран / пропадает UI). Включается явно:
- * NEXT_PUBLIC_AI_PEER_IFRAME=1 или true. Локально по умолчанию включено.
+ * Скрытый /peer синкает второй клиент в комнату и грузит Liveblocks/tldraw.
+ * По умолчанию везде ВЫКЛ — включайте только при необходимости: NEXT_PUBLIC_AI_PEER_IFRAME=1
  */
 function aiPeerIframeEnabled(): boolean {
   const v = process.env.NEXT_PUBLIC_AI_PEER_IFRAME?.trim().toLowerCase();
-  if (v === "1" || v === "true" || v === "yes") return true;
-  if (v === "0" || v === "false" || v === "no") return false;
-  return process.env.NODE_ENV === "development";
+  return v === "1" || v === "true" || v === "yes";
 }
 
 export function AiPeerIframe({ roomId }: { roomId: string }) {
