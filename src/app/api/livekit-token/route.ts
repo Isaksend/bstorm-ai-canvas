@@ -48,6 +48,7 @@ export async function POST(request: Request) {
   }
 
   const authSession = await auth();
+  const nameFromPreJoin = sanitizeDisplayName(body.displayName);
 
   let identity: string;
   let name: string;
@@ -55,9 +56,11 @@ export async function POST(request: Request) {
   if (authSession?.user?.id) {
     identity = `u_${authSession.user.id}`.slice(0, 120);
     name =
-      (authSession.user.name && authSession.user.name.trim().slice(0, 40)) ||
-      authSession.user.email?.split("@")[0]?.slice(0, 40) ||
-      "Участник";
+      nameFromPreJoin.length > 0
+        ? nameFromPreJoin
+        : (authSession.user.name && authSession.user.name.trim().slice(0, 40)) ||
+          authSession.user.email?.split("@")[0]?.slice(0, 40) ||
+          "Участник";
   } else {
     const guestId = typeof body.guestId === "string" ? body.guestId.trim() : "";
     if (!UUID_RE.test(guestId)) {
@@ -67,8 +70,7 @@ export async function POST(request: Request) {
       );
     }
     identity = `g_${guestId}`;
-    const dn = sanitizeDisplayName(body.displayName);
-    name = dn.length > 0 ? dn : "Гость";
+    name = nameFromPreJoin.length > 0 ? nameFromPreJoin : "Гость";
   }
 
   const token = new AccessToken(apiKey, apiSecret, {

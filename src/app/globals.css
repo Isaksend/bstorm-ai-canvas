@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* LiveKit PreJoin: только аудио — скрываем превью камеры и переключатель видео */
+.lk-audio-only-prejoin .lk-video-container,
+.lk-audio-only-prejoin .lk-button-group.video {
+  display: none;
+}
